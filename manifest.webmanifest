@@ -1,0 +1,29 @@
+{
+  "name": "林间日记 · 双相心境记录",
+  "short_name": "林间日记",
+  "description": "双相情感障碍自我观察工具：记录心情、睡眠、服药、经期，自动总结规律并生成就诊报告。数据只保存在你自己的设备上。",
+  "lang": "zh-CN",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#EFF4EE",
+  "theme_color": "#2E5744",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
