@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>使用说明书 · 林间日记</title>
+<meta name="description" content="林间日记使用说明书：如何开始、数据保存规则、每个页面的用法与常见问题。" />
+<meta name="theme-color" content="#2E5744" />
+<link rel="icon" href="icons/icon-192.png" />
+<style>
+:root{
+  --bg:#EFF4EE; --bg-deep:#E4EDE3; --card:#FFFFFF; --ink:#173129; --ink-soft:#54685D;
+  --moss:#4C7A5A; --moss-deep:#2E5744; --fern:#87AB8F; --mist:#DDE8DC; --line:#D6E1D5;
+  --amber:#C98B3D; --river:#5E7FA3; --blush:#C77B8B;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:radial-gradient(1200px 500px at 85% -80px,var(--bg-deep),transparent),var(--bg);color:var(--ink);font-family:'Noto Sans SC',system-ui,sans-serif;line-height:1.85;font-size:15.5px}
+header{background:linear-gradient(160deg,#1E4033,#2E5744 55%,#3E6B52);color:#fff;text-align:center;padding:52px 20px 64px;position:relative;overflow:hidden}
+header::after{content:"";position:absolute;left:0;right:0;bottom:-2px;height:38px;background:var(--bg);border-radius:100% 100% 0 0/56px 56px 0 0}
+header .fern{position:absolute;top:18px;opacity:.35;font-size:0}
+header h1{font-family:'Noto Serif SC',serif;font-weight:900;font-size:30px;letter-spacing:8px;margin:0 0 10px}
+header p{margin:0;opacity:.88;font-size:14.5px;letter-spacing:1px}
+header .url{display:inline-block;margin-top:18px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:8px 22px;color:#fff;text-decoration:none;font-size:14px}
+main{max-width:720px;margin:-14px auto 0;padding:0 18px 70px}
+section{background:var(--card);border-radius:22px;padding:26px 26px 22px;margin:22px 0;box-shadow:0 8px 26px rgba(23,49,41,.07);border:1px solid var(--line)}
+h2{font-family:'Noto Serif SC',serif;font-size:20px;color:var(--moss-deep);letter-spacing:2px;margin:0 0 14px;display:flex;align-items:center;gap:10px}
+h2 .no{font-size:12px;color:var(--fern);letter-spacing:1px;font-family:'Noto Sans SC'}
+h3{font-size:15.5px;color:var(--moss-deep);margin:20px 0 6px}
+p{margin:10px 0}
+strong{color:var(--moss-deep)}
+.tip{background:#F3F8F2;border:1.5px dashed var(--fern);border-radius:16px;padding:14px 18px;font-size:14px;color:var(--ink-soft);margin:16px 0}
+.warn{background:#FBF3E6;border-left:5px solid var(--amber);border-radius:14px;padding:16px 20px;margin:16px 0}
+.danger{background:#FDF1F0;border-left:5px solid #C0614F;border-radius:14px;padding:16px 20px;margin:16px 0}
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+th{background:var(--mist);color:var(--moss-deep);white-space:nowrap;font-family:'Noto Serif SC',serif;letter-spacing:1px}
+td:first-child{white-space:nowrap;font-weight:700}
+tr.up td:first-child{color:var(--amber)} tr.mid td:first-child{color:var(--moss)} tr.down td:first-child{color:var(--river)}
+ul{margin:8px 0;padding-left:22px}
+li{margin:7px 0}
+.faq dt{font-weight:700;color:var(--moss-deep);margin-top:16px}
+.faq dd{margin:4px 0 0}
+.vine{text-align:center;color:var(--fern);letter-spacing:6px;opacity:.7;margin:6px 0 2px;font-size:13px}
+footer{text-align:center;color:var(--ink-soft);font-size:12.5px;padding:0 20px 46px;opacity:.85;line-height:2}
+a{color:var(--moss)}
+.cta{display:inline-block;background:linear-gradient(135deg,var(--moss),var(--moss-deep));color:#fff;text-decoration:none;border-radius:999px;padding:11px 30px;font-weight:700;box-shadow:0 6px 18px rgba(46,87,68,.3);margin-top:6px}
+@media (max-width:480px){ header h1{font-size:24px;letter-spacing:5px} section{padding:20px 16px} th,td{padding:7px 8px} }
+</style>
+</head>
+<body>
+
+<header>
+  <svg class="fern" style="left:14px" width="70" height="120" viewBox="0 0 70 120" fill="none" stroke="#fff" stroke-width="1.5"><path d="M35 5 v110 M35 20 c-12-4-20-2-26 6 M35 20 c12-4 20-2 26 6 M35 42 c-11-4-18-2-24 5 M35 42 c11-4 18-2 24 5 M35 64 c-10-3-16-1-21 5 M35 64 c10-3 16-1 21 5 M35 86 c-8-3-13-1-17 4 M35 86 c8-3 13-1 17 4"/></svg>
+  <svg class="fern" style="right:14px;transform:scaleX(-1)" width="70" height="120" viewBox="0 0 70 120" fill="none" stroke="#fff" stroke-width="1.5"><path d="M35 5 v110 M35 20 c-12-4-20-2-26 6 M35 20 c12-4 20-2 26 6 M35 42 c-11-4-18-2-24 5 M35 42 c11-4 18-2 24 5 M35 64 c-10-3-16-1-21 5 M35 64 c10-3 16-1 21 5 M35 86 c-8-3-13-1-17 4 M35 86 c8-3 13-1 17 4"/></svg>
+  <h1>使 用 说 明 书</h1>
+  <p>林间日记 · 双相心境记录 —— 像看四季流过森林</p>
+  <a class="url" href="./">🌲 打开林间日记</a>
+</header>
+
+<main>
+
+<section>
+  <p style="margin-top:2px">林间日记帮你记录每天的<strong>心情、睡眠、服药、经期</strong>等状态，自动画出整月起伏、总结你的个人规律，并生成可以直接带去门诊的报告。<strong>完全免费、无广告、不用注册</strong>，所有记录只保存在你自己的手机或电脑里，任何其他人（包括开发者）都看不到。</p>
+  <p>请先读完第一节「三件重要的事」，再开始使用。</p>
+</section>
+
+<section>
+  <h2><span class="no">壹</span>开始之前，三件重要的事</h2>
+  <h3>1 · 你的记录只存在"这台设备的这个浏览器"里</h3>
+  <p>不用登录的代价是：数据不会在设备之间同步。今天用手机 Chrome 记的，明天必须还用<strong>这台手机的 Chrome</strong> 打开才能看到；换手机、换浏览器，都等于翻开一本新的空日记。请固定用同一台设备的同一个浏览器记录。</p>
+  <h3>2 · 请添加到手机主屏幕（强烈建议，尤其 iPhone）</h3>
+  <p>添加后它就像真正的 App：独立图标、全屏运行、<strong>没网也能用</strong>。更重要的是——iPhone 上如果只是偶尔用 Safari 打开、连续一周多不访问，系统可能自动清除网站数据；添加到主屏幕后就不会。</p>
+  <ul>
+    <li><strong>iPhone</strong>：用 Safari 打开网址 → 底部分享按钮（方框加箭头）→ 「<strong>添加到主屏幕</strong>」</li>
+    <li><strong>安卓</strong>：用 Chrome 打开网址 → 右上角菜单 ⋮ → 「<strong>安装应用</strong>」（或「添加到主屏幕」）</li>
+  </ul>
+  <h3>3 · 每月导出一次报告，当作备份</h3>
+  <p>「报告」页可一键下载 .txt 文件——既是就诊材料，也是你<strong>唯一的备份手段</strong>。万一换手机或数据被清理，历史至少都在文件里。建议每月月底导出一次，存到网盘或发给自己。</p>
+  <div class="tip">💬 从微信点开链接时，数据会存在微信自带的浏览器里，和手机浏览器不互通，也可能随微信清缓存丢失。请点右上角「···」选「<strong>在浏览器打开</strong>」，再添加到主屏幕。另外请不要用无痕 / 隐私模式记录，关掉窗口数据就没了。</div>
+</section>
+
+<section>
+  <h2><span class="no">贰</span>第一次打开：先逛一逛，再清空示例</h2>
+  <p>第一次打开会看到 <strong>45 天示例数据</strong>——虚构的演示内容，让你先看到记满之后的样子：日历有颜色、情绪之河在流动、规律页有分析、报告是完整的。四个页面逛一遍后，点顶部横幅的「<strong>清空示例，开始我的记录</strong>」，你自己的日记正式开始。</p>
+</section>
+
+<section>
+  <h2><span class="no">叁</span>「记录」页：每天两三分钟</h2>
+  <p>顶部选日期：默认今天，一周内点上方圆点快速切换，更早的用日期框选择——<strong>忘记记的日子随时可以补</strong>。已有记录的日子会提示"正在修改"，保存即覆盖更新。</p>
+
+  <h3>🍃 今天的心情落在哪里（核心，尽量每天记）</h3>
+  <p>采用双相门诊常用的 −3 ～ +3 七级生活图表法，高低两个方向都要留意：</p>
+  <table>
+    <tr><th>档位</th><th>大概是什么感觉</th></tr>
+    <tr class="up"><td>+3 重度高涨</td><td>几乎不需要睡觉，思维停不下来，可能有冲动消费、危险举动，生活明显失控——请尽快联系医生</td></tr>
+    <tr class="up"><td>+2 明显高涨</td><td>精力异常旺盛、话特别多、睡得很少也不困，身边人能看出你"不太对"</td></tr>
+    <tr class="up"><td>+1 略高涨</td><td>比平时兴奋、点子多、效率高，自己能察觉"有点上头"</td></tr>
+    <tr class="mid"><td>0 平稳</td><td>普普通通的一天，情绪在正常范围内波动</td></tr>
+    <tr class="down"><td>−1 略低落</td><td>提不太起劲、兴致低，但日常生活还能维持</td></tr>
+    <tr class="down"><td>−2 明显低落</td><td>起床、洗漱都很费力，回避人和事，功能明显受影响</td></tr>
+    <tr class="down"><td>−3 重度低落</td><td>几乎无法起床、无法完成基本生活；如果出现伤害自己的念头，请立刻联系你的医生或信任的人</td></tr>
+  </table>
+  <p>拿不准选哪档时，选轻的那档即可——趋势比单日的精确更重要。</p>
+
+  <h3>🌙 昨晚的睡眠</h3>
+  <p>拖动滑块记录时长（睡眠对双相非常关键，少于 6 小时会有提醒），再选睡眠质量：睡得安稳 / 一般 / 易醒 · 难入睡。</p>
+
+  <h3>🍄 食欲 与 ✨ 精力</h3>
+  <p>食欲是五朵蘑菇，从"很小蘑菇"（几乎吃不下）到"双菇并立"（食欲旺盛），点亮符合今天的那档；精力是五格夜色里的萤火虫，今天有几分精力，就点亮几只的那一格。</p>
+
+  <h3>💊 服药</h3>
+  <p>第一次先点「<strong>管理我的药物</strong>」，把正在吃的每一种药加进来（药名、剂量、服法，如"碳酸锂缓释片 · 300mg · 早晚各一次"）。之后每天给每种药逐个打勾。调药、停药时回到管理里增删即可，报告会分别统计每种药的坚持情况。</p>
+
+  <h3>🌿 今天的影响因素</h3>
+  <p>咖啡、酒、压力、人际冲突、熬夜、运动……这些事常会牵动心慌与躁动。预设了八个常见因素，点选即可（可多选），也能添加自己的因素（如"调药""见了家人"）。坚持记一段时间后，「规律」页会自动分析每个因素和你心情的关系——回答"我到底对什么敏感"。</p>
+
+  <h3>🌤️ 天气 · 🌸 月经 · 📝 备注</h3>
+  <p>天气点选即可，规律页会自动分析它和情绪的关系。月经（不适用可跳过）：经期中记"第几天"，系统按昨天自动建议 +1；非经期显示"本次周期第 X 天"，记录两次以上经期后会算出平均周期并分析经期前后的情绪变化。备注想写什么都可以，报告里会原样呈现，是门诊时很有用的细节。</p>
+
+  <p>填完点「<strong>保存这一天</strong>」，看到小芽破土的弹窗就成功了。<strong>不需要每项都填，哪怕只记一个心情分数也有价值</strong>；填错重选再保存即可，也可用「删除这天」整天重来。</p>
+</section>
+
+<section>
+  <h2><span class="no">肆</span>「总结」页：一眼看完一个月</h2>
+  <ul>
+    <li><strong>月历</strong>：每天按心情上色——偏蓝低落、绿色平稳、琥珀高涨，颜色越深程度越重；灰色空格是没记录的日子。小圆点标记经期，漏服药也有标记（见图例）。<strong>点任何一天可展开当天完整记录</strong>，「上月 / 下月」翻看历史。</li>
+    <li><strong>情绪之河</strong>：整月心情连成的曲线，平缓、上扬还是俯冲，一眼看出走势。</li>
+    <li><strong>四个统计</strong>：记录天数、心情均值、平均睡眠、服药依从率——医生最常问的几个数字。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="no">伍</span>「规律」页：你的个人模式</h2>
+  <p>坚持记录两三周后，这页会越来越有内容：</p>
+  <ul>
+    <li><strong>洞察</strong>：自动分析你的睡眠与心情的关联、服药日与未服药日的稳定差异、经期及经期前的情绪模式、不同天气下的状态差异——都来自<strong>你自己的数据</strong>，每个人的规律不一样。</li>
+    <li><strong>未来三天 · 趋势外推</strong>：根据最近 7 天走向做的简单延伸。<strong>它不是医学预测</strong>——双相的状态转换有时很突然，请把它当作"照目前趋势可能的方向"，而非"一定会发生"。</li>
+  </ul>
+  <div class="warn">⚠️ <strong>需要留意的信号</strong>：当数据出现典型发作前兆——最常见的是「<strong>心情持续走高 + 睡眠明显减少</strong>」（越睡越少、越来越兴奋，是躁狂 / 轻躁发作的经典组合）——这里会出现橙色预警卡。看到预警，请尽快联系你的医生，并把记录给 TA 看。预警宁可敏感：空报一次没有损失，漏过一次代价很大。</div>
+</section>
+
+<section>
+  <h2><span class="no">陆</span>「报告」页：带着数据去看医生</h2>
+  <p>选择范围（某个月或全部记录），一键生成完整报告：总体概况、心情分布、显著波动日、观察到的规律、每日明细。<strong>下载 .txt</strong> 可打印或存在手机里门诊给医生看；<strong>复制全文</strong>可粘贴到微信 / 备忘录发给医生或家人。</p>
+  <p>对医生来说，逐日的客观记录远比回忆"我最近还行吧"有价值。</p>
+  <p>这一页还有「<strong>数据备份与搬家</strong>」：<strong>导出数据文件</strong>会把全部记录打包成一个 .json 文件，<strong>导入数据文件</strong>能把它完整读回来。换手机就靠它——旧手机导出、新手机导入，一分钟搬完家。平时每月导出一份存到网盘，就是最稳妥的备份（.txt 报告给医生看，.json 文件给应用读）。</p>
+</section>
+
+<section>
+  <h2><span class="no">柒</span>常见问题</h2>
+  <dl class="faq">
+    <dt>需要一直联网吗？</dt><dd>第一次打开需要；添加到主屏幕后没网也能正常记录查看，恢复联网后一切照常。</dd>
+    <dt>换新手机怎么办？</dt><dd>在旧手机的「报告」页点<strong>「导出数据文件」</strong>得到一个 .json 文件，把它传到新手机（微信、网盘都行），新手机打开应用在同一位置点<strong>「导入数据文件」</strong>选中它——所有记录、药物清单原样搬过来，一分钟完成。</dd>
+    <dt>别人能看到我的记录吗？</dt><dd>不能。数据不经过任何服务器，开发者和其他使用者都看不到。唯一例外：和你共用同一台设备同一浏览器的人能看到，共用设备请自己留意。</dd>
+    <dt>一天可以记多次吗？</dt><dd>每天一条记录，随时可改（重新保存即覆盖）。建议固定睡前记，顺手回顾一天。</dd>
+    <dt>漏记好几天怎么办？</dt><dd>用日期选择器逐天补上即可；补不全也没关系，长期趋势不会因几个空格失效。</dd>
+    <dt>想删掉某天 / 全部记录？</dt><dd>单天：记录页选中那天点「删除这天」。全部：在浏览器设置里清除本网站数据（不可恢复，清除前请先导出报告）。</dd>
+    <dt>收费吗？有广告吗？</dt><dd>完全免费，没有广告，没有内购。</dd>
+  </dl>
+</section>
+
+<section>
+  <h2><span class="no">捌</span>请务必记住</h2>
+  <p>林间日记是<strong>自我观察的辅助工具</strong>，不构成医学建议，不能诊断，更不能替代医生和药物。规律页的分析与预测只是你个人数据的统计呈现。请遵医嘱用药，<strong>不要因为"最近记录看起来很平稳"而自行减药停药</strong>——示例数据里那段"觉得状态好就停药"的剧情，是无数病友走过的弯路。</p>
+  <div class="danger">如果你正处在很艰难的时刻，或出现了伤害自己的念头：请放下手机里的记录，<strong>立刻联系你的医生、信任的家人朋友，或拨打当地的心理援助热线</strong>。数据可以之后再补，你要先照顾好自己。</div>
+  <p style="text-align:center;margin-top:22px"><a class="cta" href="./">🌲 打开林间日记</a></p>
+</section>
+
+<div class="vine">· ─── 🌿 ─── ·</div>
+
+</main>
+
+<footer>
+  林间日记 · 愿这片小小的林子，陪你安稳地走过每一个季节<br/>
+  所有数据只保存在你自己的设备上 · 本工具不能替代专业诊疗
+</footer>
+
+</body>
+</html>

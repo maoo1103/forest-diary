@@ -17228,8 +17228,10 @@ const WEATHERS = [
     { v: "雨", icon: "🌧️" }, { v: "雪", icon: "❄️" }, { v: "风", icon: "🌬️" },
 ];
 const SLEEP_Q = ["睡得安稳", "一般", "易醒 / 难入睡"];
+const PRESET_FACTORS = ["☕ 咖啡/浓茶", "🍺 饮酒", "💼 工作/学业压力", "💬 人际冲突", "🌃 熬夜/作息乱", "🤒 身体不适", "🏃 运动", "🧳 外出/旅行"];
 const K_ENTRIES = "forest-diary:entries";
 const K_MEDS = "forest-diary:meds";
+const K_FACTORS = "forest-diary:factors";
 const K_META = "forest-diary:meta";
 /* 存储适配层：
    1) 在 Claude 里运行 → 使用 Claude 提供的 window.storage（跟随你的账号持久保存，仅你可见）
@@ -17280,6 +17282,10 @@ function makeDemo() {
     const rainDays = new Set([17, 18, 19, 21, 29]);
     const sunDays = new Set([9, 11, 12, 38, 41, 43, 44]);
     const medOverride = { 13: "part", 14: "none", 15: "none", 16: "part" };
+    const fCoffee = new Set([12, 13, 14, 15, 16, 41, 42, 43, 44]);
+    const fLate = new Set([13, 14, 15, 16, 43, 44]);
+    const fStress = new Set([17, 18, 19]);
+    const fSport = new Set([26, 33, 38]);
     const notes = {
         15: "感觉状态好到发光，觉得不吃药也没关系（现在回看是危险信号）",
         19: "什么都不想做，一直躺着，饭也不想吃",
@@ -17296,6 +17302,15 @@ function makeDemo() {
         const periodDay = i >= 3 && i <= 7 ? i - 2 : i >= 31 && i <= 35 ? i - 30 : undefined;
         const med = medOverride[i] || "full";
         const medsTaken = med === "full" ? { m1: true, m2: true } : med === "part" ? { m1: true, m2: false } : { m1: false, m2: false };
+        const fl = [];
+        if (fCoffee.has(i))
+            fl.push("☕ 咖啡/浓茶");
+        if (fLate.has(i))
+            fl.push("🌃 熬夜/作息乱");
+        if (fStress.has(i))
+            fl.push("💼 工作/学业压力");
+        if (fSport.has(i))
+            fl.push("🏃 运动");
         entries[date] = {
             mood,
             sleep: sleeps[i],
@@ -17306,6 +17321,7 @@ function makeDemo() {
             weather: rainDays.has(i) ? "雨" : sunDays.has(i) ? "晴" : wDefault[i % wDefault.length],
             period: inPeriod, periodDay,
             note: notes[i] || "",
+            ...(fl.length ? { factors: fl } : {}),
         };
     }
     return entries;
@@ -17406,6 +17422,19 @@ function analyse(entries) {
         if (avg(hi[1]) - avg(lo[1]) > 0.7)
             res.insights.push({ icon: "⛅", t: "天气 ↔ 心情", d: `「${hi[0]}」天你的心情平均较高（${avg(hi[1]) >= 0 ? "+" : ""}${avg(hi[1]).toFixed(1)}），「${lo[0]}」天平均较低（${avg(lo[1]).toFixed(1)}）。连续阴雨的日子，可以有意识地多安排一点让自己舒服的事。` });
     }
+    /* 影响因素 × 心情 */
+    const byF = {};
+    withMood.forEach((e) => (e.factors || []).forEach((f) => (byF[f] = byF[f] || []).push(e.mood)));
+    Object.entries(byF).forEach(([f, arr]) => {
+        if (arr.length < 3)
+            return;
+        const others = withMood.filter((e) => !(e.factors || []).includes(f)).map((e) => e.mood);
+        if (others.length < 3)
+            return;
+        const diff = avg(arr) - avg(others);
+        if (Math.abs(diff) > 0.7)
+            res.insights.push({ icon: "🌿", t: `「${f}」↔ 心情`, d: `标记「${f}」的 ${arr.length} 天，心情平均比其他日子${diff > 0 ? "偏高" : "偏低"} ${Math.abs(diff).toFixed(1)} 分。这是相关性提示而非因果结论——可以试着调整这个因素，观察记录随之的变化，并把发现带给医生聊聊。` });
+    });
     /* 趋势与预测 */
     const recent = withMood.slice(-7);
     if (recent.length >= 4) {
@@ -17447,6 +17476,8 @@ function buildReport(entries, meds, monthKey) {
     const ci = cycleInfo(entries, dates[dates.length - 1]);
     const episodes = withMood.filter((e) => Math.abs(e.mood) >= 2);
     const medName = (v) => ({ full: "全部服", part: "部分服", none: "未服" }[v] || "--");
+    const dw = (s) => [...String(s)].reduce((n, ch) => n + (ch.charCodeAt(0) > 255 ? 2 : 1), 0);
+    const pad = (s, w) => String(s) + " ".repeat(Math.max(1, w - dw(String(s))));
     let t = "";
     t += "══════════════════════════════════════\n";
     t += "   情绪与生活状态记录报告（就诊参考）\n";
@@ -17467,6 +17498,11 @@ function buildReport(entries, meds, monthKey) {
     }
     if (a.medRate != null)
         t += `· 服药依从率 ${a.medRate}%（按「全部服药」的天数计算）\n`;
+    const fCount = {};
+    list.forEach((e) => (e.factors || []).forEach((f) => (fCount[f] = (fCount[f] || 0) + 1)));
+    const fArr = Object.entries(fCount).sort((x, y) => y[1] - x[1]);
+    if (fArr.length)
+        t += `· 影响因素：${fArr.map(([f, c]) => `${f} ${c} 天`).join("；")}\n`;
     if (meds && meds.length) {
         t += "\n【二、目前用药】\n";
         meds.forEach((m) => {
@@ -17492,6 +17528,8 @@ function buildReport(entries, meds, monthKey) {
                 t += `，睡眠 ${e.sleep}h`;
             if (e.med)
                 t += `，${medName(e.med)}药`;
+            if (e.factors && e.factors.length)
+                t += `，因素：${e.factors.join("、")}`;
             if (e.note)
                 t += `。记：${e.note}`;
             t += "\n";
@@ -17506,13 +17544,15 @@ function buildReport(entries, meds, monthKey) {
         a.warnings.forEach((s) => (t += "· " + s + "\n"));
     }
     t += "\n【七、每日明细】\n";
-    t += "日期        心情  睡眠      食欲 精力 服药    天气 经期    备注\n";
-    t += "--------------------------------------------------------------\n";
+    const SQ_SHORT = { "睡得安稳": "安稳", "一般": "一般", "易醒 / 难入睡": "易醒" };
+    t += pad("日期", 12) + pad("心情", 6) + pad("睡眠", 11) + pad("食欲", 5) + pad("精力", 5) + pad("服药", 8) + pad("天气", 6) + pad("经期", 8) + "因素 / 备注\n";
+    t += "-".repeat(66) + "\n";
     list.forEach((e) => {
         const mood = typeof e.mood === "number" ? (e.mood >= 0 ? "+" + e.mood : String(e.mood)) : "--";
-        const sleep = e.sleep != null ? `${e.sleep}h${e.sleepQ ? "·" + e.sleepQ.slice(0, 2) : ""}` : "--";
+        const sleep = e.sleep != null ? `${e.sleep}h${e.sleepQ ? "·" + (SQ_SHORT[e.sleepQ] || e.sleepQ) : ""}` : "--";
         const per = e.period ? `第${e.periodDay || "?"}天` : "--";
-        t += `${e.date}  ${mood.padEnd(4)} ${sleep.padEnd(9)} ${String(e.appetite ?? "--").padEnd(3)} ${String(e.energy ?? "--").padEnd(3)} ${medName(e.med).padEnd(5)} ${(e.weather || "--").padEnd(3)} ${per.padEnd(6)} ${e.note || ""}\n`;
+        const extra = [(e.factors || []).length ? `[${(e.factors || []).join(" ")}]` : "", e.note || ""].filter(Boolean).join(" ");
+        t += pad(e.date, 12) + pad(mood, 6) + pad(sleep, 11) + pad(e.appetite ?? "--", 5) + pad(e.energy ?? "--", 5) + pad(medName(e.med), 8) + pad(e.weather || "--", 6) + pad(per, 8) + extra + "\n";
     });
     t += "\n说明：本报告由个人自我记录整理而成，供就诊时参考，不构成医学诊断。\n";
     return t;
@@ -17679,6 +17719,12 @@ function ForestDiary() {
     const [selDay, setSelDay] = useState(null);
     const [medMgr, setMedMgr] = useState(false);
     const [newMed, setNewMed] = useState({ name: "", dose: "", timing: "" });
+    const [factors, setFactors] = useState([]);
+    const [fMgr, setFMgr] = useState(false);
+    const [newFactor, setNewFactor] = useState("");
+    const [importData, setImportData] = useState(null);
+    const [importMsg, setImportMsg] = useState("");
+    const importRef = useRef(null);
     const [reportMonth, setReportMonth] = useState("all");
     const [copied, setCopied] = useState(false);
     const [showSaved, setShowSaved] = useState(false);
@@ -17687,7 +17733,7 @@ function ForestDiary() {
     /* 加载：无数据时植入示例，让所有功能立即可见 */
     useEffect(() => {
         (async () => {
-            let e = null, m = null, meta = null;
+            let e = null, m = null, meta = null, f = null;
             try {
                 const r = await store.get(K_ENTRIES);
                 if (r && r.value)
@@ -17698,6 +17744,12 @@ function ForestDiary() {
                 const r = await store.get(K_MEDS);
                 if (r && r.value)
                     m = JSON.parse(r.value);
+            }
+            catch (_) { }
+            try {
+                const r = await store.get(K_FACTORS);
+                if (r && r.value)
+                    f = JSON.parse(r.value);
             }
             catch (_) { }
             try {
@@ -17719,6 +17771,7 @@ function ForestDiary() {
             }
             setEntries(e || {});
             setMeds(m || []);
+            setFactors(f || []);
             setIsDemo(!!(meta && meta.demo));
             setLoaded(true);
         })();
@@ -17742,13 +17795,22 @@ function ForestDiary() {
         }
         catch (_) { }
     };
+    const persistFactors = async (next) => {
+        setFactors(next);
+        try {
+            await store.set(K_FACTORS, JSON.stringify(next));
+        }
+        catch (_) { }
+    };
     const clearDemo = async () => {
         const emptied = {};
         setEntries(emptied);
+        setMeds([]);
         setIsDemo(false);
         setForm({});
         try {
             await store.set(K_ENTRIES, JSON.stringify(emptied));
+            await store.set(K_MEDS, "[]");
             await store.set(K_META, JSON.stringify({ demo: false }));
         }
         catch (_) { }
@@ -17777,6 +17839,66 @@ function ForestDiary() {
         setForm({});
         setSaveMsg("已删除这天的记录");
         setTimeout(() => setSaveMsg(""), 2400);
+    };
+    /* ── 数据备份与搬家 ── */
+    const exportData = () => {
+        const payload = { app: "forest-diary", version: 1, exportedAt: todayStr(), entries, meds, customFactors: factors };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `林间日记-数据备份-${todayStr()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    };
+    const onImportFile = (ev) => {
+        const file = ev.target.files && ev.target.files[0];
+        ev.target.value = "";
+        if (!file)
+            return;
+        const reader = new FileReader();
+        reader.onload = () => {
+            try {
+                const d = JSON.parse(String(reader.result));
+                if (d && d.app === "forest-diary" && d.entries && typeof d.entries === "object") {
+                    setImportData(d);
+                    setImportMsg("");
+                }
+                else {
+                    setImportData(null);
+                    setImportMsg("这不是林间日记的数据文件——请选择用「导出数据文件」生成的 .json 文件。");
+                }
+            }
+            catch (_) {
+                setImportData(null);
+                setImportMsg("文件读取失败，请确认选择的是导出的 .json 数据文件。");
+            }
+        };
+        reader.readAsText(file);
+    };
+    const confirmImport = async () => {
+        const d = importData;
+        if (!d)
+            return;
+        const nextE = { ...(isDemo ? {} : entries), ...d.entries };
+        const ids = new Set((d.meds || []).map((m) => m.id));
+        const nextM = [...(d.meds || []), ...(isDemo ? [] : meds).filter((m) => !ids.has(m.id))];
+        const nextF = [...new Set([...(d.customFactors || []), ...factors])];
+        setEntries(nextE);
+        setMeds(nextM);
+        setFactors(nextF);
+        setIsDemo(false);
+        setImportData(null);
+        try {
+            await store.set(K_ENTRIES, JSON.stringify(nextE));
+            await store.set(K_MEDS, JSON.stringify(nextM));
+            await store.set(K_FACTORS, JSON.stringify(nextF));
+            await store.set(K_META, JSON.stringify({ demo: false }));
+        }
+        catch (_) { }
+        setImportMsg(`已导入 ${Object.keys(d.entries).length} 天记录 🌿 去「总结」页看看吧。`);
+        setTimeout(() => setImportMsg(""), 6000);
     };
     /* 快速日期条：最近 12 天 */
     const strip = useMemo(() => Array.from({ length: 12 }, (_, i) => addDays(todayStr(), i - 11)), []);
@@ -17849,7 +17971,6 @@ function ForestDiary() {
     ];
     return (React.createElement("div", { style: { minHeight: "100vh", background: `radial-gradient(1200px 500px at 85% -80px, ${C.bgDeep}, transparent), ${C.bg}`, color: C.ink, fontFamily: "'Noto Sans SC', system-ui, sans-serif" } },
         React.createElement("style", null, `
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700;900&family=Noto+Sans+SC:wght@400;500;700&display=swap');
         @keyframes drift1 { 0%,100%{transform:translateX(0)} 50%{transform:translateX(-46px)} }
         @keyframes drift2 { 0%,100%{transform:translateX(0)} 50%{transform:translateX(58px)} }
         @keyframes swayL { 0%,100%{transform:rotate(-2deg)} 50%{transform:rotate(3deg)} }
@@ -18037,6 +18158,23 @@ function ForestDiary() {
                                 ? `上次经期从 ${ci.lastStart} 开始。周期天数会自动计算，不用手动填。`
                                 : "第一次记录经期后，这里会开始自动追踪周期。"))),
                 React.createElement(Card, { className: "rise" },
+                    React.createElement(H, { icon: "\uD83C\uDF3F", extra: React.createElement("button", { onClick: () => setFMgr(!fMgr), style: { border: "none", background: "none", color: C.moss, cursor: "pointer", fontSize: 12.5, fontFamily: "inherit", textDecoration: "underline", textUnderlineOffset: 3 } }, fMgr ? "收起" : "＋ 自定义因素") }, "\u4ECA\u5929\u7684\u5F71\u54CD\u56E0\u7D20"),
+                    React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap" } }, [...PRESET_FACTORS, ...factors].map((f) => {
+                        const on = (form.factors || []).includes(f);
+                        return (React.createElement(Chip, { key: f, active: on, onClick: () => setForm({ ...form, factors: on ? (form.factors || []).filter((x) => x !== f) : [...(form.factors || []), f] }) }, f));
+                    })),
+                    React.createElement("div", { style: { fontSize: 12.5, color: C.inkSoft, marginTop: 10, lineHeight: 1.6 } }, "\u5496\u5561\u3001\u9152\u3001\u538B\u529B\u3001\u51B2\u7A81\u2026\u2026\u8FD9\u4E9B\u4E8B\u5E38\u4F1A\u7275\u52A8\u5FC3\u614C\u4E0E\u8E81\u52A8\u3002\u968F\u624B\u70B9\u9009\uFF08\u53EF\u591A\u9009\uFF09\uFF0C\u575A\u6301\u8BB0\u4E00\u6BB5\u65F6\u95F4\uFF0C\u300C\u89C4\u5F8B\u300D\u9875\u4F1A\u81EA\u52A8\u5206\u6790\u5B83\u4EEC\u548C\u4F60\u72B6\u6001\u7684\u5173\u7CFB\u3002"),
+                    fMgr && (React.createElement("div", { style: { marginTop: 12, padding: 14, borderRadius: 16, background: C.bg, display: "grid", gap: 10 } },
+                        factors.map((f) => (React.createElement("div", { key: f, style: { display: "flex", alignItems: "center", gap: 8, fontSize: 13.5 } },
+                            React.createElement(Leaf, { size: 14, filled: true, color: C.fern }),
+                            React.createElement("span", null, f),
+                            React.createElement("button", { onClick: () => { persistFactors(factors.filter((x) => x !== f)); if ((form.factors || []).includes(f))
+                                    setForm({ ...form, factors: form.factors.filter((x) => x !== f) }); }, style: { marginLeft: "auto", border: "none", background: "none", color: "#B0684F", cursor: "pointer", fontSize: 12.5, fontFamily: "inherit" } }, "\u79FB\u9664")))),
+                        React.createElement("div", { style: { display: "flex", gap: 8 } },
+                            React.createElement("input", { placeholder: "\u6DFB\u52A0\u81EA\u5DF1\u7684\u56E0\u7D20\uFF0C\u5982\uFF1A\u8C03\u836F\u3001\u89C1\u4E86\u5BB6\u4EBA", value: newFactor, onChange: (e) => setNewFactor(e.target.value), style: { flex: 1, padding: "9px 12px", borderRadius: 12, border: `1.5px solid ${C.line}`, fontSize: 14 } }),
+                            React.createElement("button", { className: "hoverable", disabled: !newFactor.trim(), onClick: () => { const v = newFactor.trim(); setNewFactor(""); if (!v || PRESET_FACTORS.includes(v) || factors.includes(v))
+                                    return; persistFactors([...factors, v]); setForm({ ...form, factors: [...(form.factors || []), v] }); }, style: { padding: "9px 18px", borderRadius: 999, border: "none", background: newFactor.trim() ? C.moss : C.mist, color: "#fff", cursor: newFactor.trim() ? "pointer" : "default", fontSize: 14, fontFamily: "inherit" } }, "\uFF0B \u6DFB\u52A0"))))),
+                React.createElement(Card, { className: "rise" },
                     React.createElement(H, { icon: "\uD83E\uDEB6" }, "\u4ECA\u5929\u60F3\u7559\u4E0B\u7684\u8BDD"),
                     React.createElement("textarea", { value: form.note || "", onChange: (e) => setForm({ ...form, note: e.target.value }), placeholder: "\u53D1\u751F\u4E86\u4EC0\u4E48\u3001\u60C5\u7EEA\u4ECE\u54EA\u91CC\u6765\u3001\u8EAB\u4F53\u6709\u4EC0\u4E48\u611F\u89C9\u2026\u2026\u5199\u7ED9\u672A\u6765\u7684\u81EA\u5DF1\uFF0C\u4E5F\u5199\u7ED9\u533B\u751F\u3002", rows: 3, style: { width: "100%", boxSizing: "border-box", padding: 13, borderRadius: 16, border: `1.5px solid ${C.line}`, fontSize: 14.5, resize: "vertical", background: "#FDFDFB", color: C.ink, lineHeight: 1.7 } })),
                 React.createElement("div", { style: { display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" } },
@@ -18107,6 +18245,10 @@ function ForestDiary() {
                             "\uD83D\uDC8A ",
                             meds.map((m) => `${m.name}${entries[selDay].medsTaken[m.id] ? " ✓" : " ✗"}`).join("　"),
                             React.createElement("br", null))),
+                        (entries[selDay].factors || []).length > 0 && React.createElement(React.Fragment, null,
+                            "\uD83C\uDF3F ",
+                            entries[selDay].factors.join(" · "),
+                            React.createElement("br", null)),
                         entries[selDay].weather && React.createElement(React.Fragment, null,
                             "\uD83C\uDF24\uFE0F ",
                             entries[selDay].weather,
@@ -18171,6 +18313,30 @@ function ForestDiary() {
                                 " \u6708"))),
                         React.createElement("button", { className: "hoverable", onClick: downloadReport, style: { padding: "11px 26px", borderRadius: 999, border: "none", cursor: "pointer", background: `linear-gradient(135deg,${C.moss},${C.mossDeep})`, color: "#fff", fontSize: 15, fontWeight: 700, fontFamily: "inherit" } }, "\u2B07 \u4E0B\u8F7D\u62A5\u544A"),
                         React.createElement("button", { className: "hoverable", onClick: copyReport, style: { padding: "11px 20px", borderRadius: 999, border: `1.5px solid ${C.moss}`, background: "#fff", color: C.moss, cursor: "pointer", fontSize: 15, fontFamily: "inherit", fontWeight: 600 } }, copied ? "已复制 ✓" : "复制全文"))),
+                React.createElement(Card, { className: "rise" },
+                    React.createElement(H, { icon: "\uD83C\uDF92" }, "\u6570\u636E\u5907\u4EFD\u4E0E\u642C\u5BB6"),
+                    React.createElement("div", { style: { fontSize: 14, color: C.inkSoft, lineHeight: 1.8, marginBottom: 14 } }, "\u300C\u5BFC\u51FA\u6570\u636E\u6587\u4EF6\u300D\u4F1A\u628A\u5168\u90E8\u8BB0\u5F55\u3001\u836F\u7269\u6E05\u5355\u548C\u81EA\u5B9A\u4E49\u56E0\u7D20\u6253\u5305\u6210\u4E00\u4E2A .json \u6587\u4EF6\u3002\u6362\u624B\u673A\u65F6\u65E7\u624B\u673A\u5BFC\u51FA\u3001\u65B0\u624B\u673A\u5728\u8FD9\u91CC\u5BFC\u5165\uFF0C\u6570\u636E\u5C31\u642C\u8FC7\u53BB\u4E86\uFF1B\u5E73\u65F6\u6BCF\u6708\u5BFC\u51FA\u4E00\u4EFD\u5B58\u597D\uFF0C\u5C31\u662F\u6700\u7A33\u59A5\u7684\u5907\u4EFD\uFF08.txt \u62A5\u544A\u662F\u7ED9\u533B\u751F\u770B\u7684\uFF0C.json \u6587\u4EF6\u662F\u7ED9\u5E94\u7528\u8BFB\u7684\uFF09\u3002"),
+                    React.createElement("div", { style: { display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" } },
+                        React.createElement("button", { className: "hoverable", onClick: exportData, style: { padding: "11px 24px", borderRadius: 999, border: "none", cursor: "pointer", background: `linear-gradient(135deg,${C.moss},${C.mossDeep})`, color: "#fff", fontSize: 15, fontWeight: 700, fontFamily: "inherit" } }, "\u2B07 \u5BFC\u51FA\u6570\u636E\u6587\u4EF6"),
+                        React.createElement("button", { className: "hoverable", onClick: () => importRef.current && importRef.current.click(), style: { padding: "11px 20px", borderRadius: 999, border: `1.5px solid ${C.moss}`, background: "#fff", color: C.moss, cursor: "pointer", fontSize: 15, fontFamily: "inherit", fontWeight: 600 } }, "\u2B06 \u5BFC\u5165\u6570\u636E\u6587\u4EF6"),
+                        React.createElement("input", { ref: importRef, type: "file", accept: ".json,application/json", onChange: onImportFile, style: { display: "none" } })),
+                    importMsg && React.createElement("div", { className: "rise", style: { marginTop: 12, fontSize: 13.5, color: C.moss, lineHeight: 1.7 } }, importMsg),
+                    importData && (React.createElement("div", { className: "rise", style: { marginTop: 14, padding: 16, borderRadius: 16, background: "#FBF3E6", border: "1.5px dashed #C98B3D", fontSize: 13.5, lineHeight: 1.8 } },
+                        "\u6587\u4EF6\u5305\u542B ",
+                        React.createElement("b", null,
+                            Object.keys(importData.entries).length,
+                            " \u5929\u8BB0\u5F55"),
+                        "\u3001",
+                        React.createElement("b", null,
+                            (importData.meds || []).length,
+                            " \u79CD\u836F\u7269"),
+                        importData.exportedAt ? `（导出于 ${importData.exportedAt}）` : "",
+                        "\u3002 \u5BFC\u5165\u540E\u5C06\u4E0E\u73B0\u6709\u6570\u636E\u5408\u5E76\uFF0C\u540C\u4E00\u5929\u4EE5\u6587\u4EF6\u5185\u5BB9\u4E3A\u51C6",
+                        isDemo ? "；当前的示例数据会先被清空" : "",
+                        "\u3002",
+                        React.createElement("div", { style: { display: "flex", gap: 10, marginTop: 10 } },
+                            React.createElement("button", { className: "hoverable", onClick: confirmImport, style: { padding: "9px 22px", borderRadius: 999, border: "none", cursor: "pointer", background: C.moss, color: "#fff", fontSize: 14, fontWeight: 700, fontFamily: "inherit" } }, "\u786E\u8BA4\u5BFC\u5165"),
+                            React.createElement("button", { className: "hoverable", onClick: () => setImportData(null), style: { padding: "9px 18px", borderRadius: 999, border: `1.5px solid ${C.line}`, background: "#fff", color: C.inkSoft, cursor: "pointer", fontSize: 14, fontFamily: "inherit" } }, "\u53D6\u6D88"))))),
                 React.createElement(Card, { className: "rise", deco: false },
                     React.createElement(H, { icon: "\uD83D\uDC40" }, "\u9884\u89C8"),
                     React.createElement("pre", { style: { whiteSpace: "pre-wrap", fontSize: 12.5, lineHeight: 1.75, color: C.ink, fontFamily: "'Noto Sans SC', ui-monospace, monospace", maxHeight: 460, overflow: "auto", background: "#FBFCF9", padding: 16, borderRadius: 16, margin: 0, border: `1px solid ${C.line}` } }, report)))),
